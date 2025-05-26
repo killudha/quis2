@@ -1,8 +1,9 @@
+// main.dart
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'screens/login_screen.dart';
+import 'screens/login_screen.dart'; // Add this import
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,7 +21,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: SplashScreenWrapper(),
+      home: const SplashScreenWrapper(),
     );
   }
 }
@@ -35,12 +36,9 @@ class SplashScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(
-              'assets/logo.png', // Path sudah benar sesuai pubspec.yaml
-              height: 100,
-            ),
-            SizedBox(height: 20),
-            CircularProgressIndicator(),
+            Image.asset('assets/logo.png', height: 100),
+            const SizedBox(height: 20),
+            const CircularProgressIndicator(),
           ],
         ),
       ),
@@ -52,14 +50,14 @@ class SplashScreenWrapper extends StatefulWidget {
   const SplashScreenWrapper({super.key});
 
   @override
-  _SplashScreenWrapperState createState() => _SplashScreenWrapperState();
+  SplashScreenWrapperState createState() => SplashScreenWrapperState();
 }
 
-class _SplashScreenWrapperState extends State<SplashScreenWrapper> {
+class SplashScreenWrapperState extends State<SplashScreenWrapper> {
   @override
   void initState() {
     super.initState();
-    Timer(Duration(seconds: 3), () {
+    Timer(const Duration(seconds: 3), () {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => LoginScreen()),
@@ -69,9 +67,11 @@ class _SplashScreenWrapperState extends State<SplashScreenWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    return SplashScreen();
+    return const SplashScreen();
   }
 }
+
+// Remove the old LoginScreen class from this file since we've moved it to its own file
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});

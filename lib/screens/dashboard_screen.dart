@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+  final String userEmail;
+  const DashboardScreen({super.key, required this.userEmail});
 
   @override
   Widget build(BuildContext context) {
@@ -34,18 +36,51 @@ class DashboardScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: ListView.builder(
-        itemCount: 10, // TODO: Replace with dynamic data count
-        itemBuilder: (context, index) {
-          return ListTile(
-            leading: CircleAvatar(
-              backgroundImage: NetworkImage('https://via.placeholder.com/150'), // TODO: Replace with student photo
-            ),
-            title: Text('Student Name $index'), // TODO: Replace with student name
-            subtitle: Text('NIM: 12345678'), // TODO: Replace with student NIM
-            onTap: () {
-              // TODO: Navigate to DetailScreen
-            },
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('students').snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Center(child: Text('No students found.'));
+          }
+          // Filter student by email
+          final students = snapshot.data!.docs
+              .where((doc) => (doc['email'] ?? '') == userEmail)
+              .toList();
+          if (students.isEmpty) {
+            return Center(child: Text('No student data for this user.'));
+          }
+          final student = students.first;
+          return ListView(
+            children: [
+              ListTile(
+                leading: CircleAvatar(
+                  backgroundImage: NetworkImage(
+                    student['photoUrl'] ?? 'https://via.placeholder.com/150',
+                  ),
+                ),
+                title: Text(student['name'] ?? '-'),
+                subtitle: Text('NIM: ${student['nim'] ?? '-'}'),
+              ),
+              ListTile(
+                title: Text('Address'),
+                subtitle: Text(student['address'] ?? '-'),
+              ),
+              ListTile(
+                title: Text('Birth Date'),
+                subtitle: Text(student['birthDate'] ?? '-'),
+              ),
+              ListTile(
+                title: Text('Hobby'),
+                subtitle: Text(student['hobby'] ?? '-'),
+              ),
+              ListTile(
+                title: Text('Phone'),
+                subtitle: Text(student['phone'] ?? '-'),
+              ),
+            ],
           );
         },
       ),
@@ -65,12 +100,8 @@ class DetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Detail'),
-      ),
-      body: Center(
-        child: Text('Detail Screen Placeholder'),
-      ),
+      appBar: AppBar(title: Text('Detail')),
+      body: Center(child: Text('Detail Screen Placeholder')),
     );
   }
 }
@@ -81,12 +112,8 @@ class AddEditScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Add / Edit'),
-      ),
-      body: Center(
-        child: Text('Add / Edit Screen Placeholder'),
-      ),
+      appBar: AppBar(title: Text('Add / Edit')),
+      body: Center(child: Text('Add / Edit Screen Placeholder')),
     );
   }
 }
