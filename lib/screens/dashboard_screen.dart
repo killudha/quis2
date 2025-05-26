@@ -45,17 +45,14 @@ class DashboardScreen extends StatelessWidget {
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return Center(child: Text('No students found.'));
           }
-          // Filter student by email
-          final students = snapshot.data!.docs
-              .where((doc) => (doc['email'] ?? '') == userEmail)
-              .toList();
-          if (students.isEmpty) {
-            return Center(child: Text('No student data for this user.'));
-          }
-          final student = students.first;
-          return ListView(
-            children: [
-              ListTile(
+
+          final students = snapshot.data!.docs;
+
+          return ListView.builder(
+            itemCount: students.length,
+            itemBuilder: (context, index) {
+              final student = students[index];
+              return ListTile(
                 leading: CircleAvatar(
                   backgroundImage: NetworkImage(
                     student['photoUrl'] ?? 'https://via.placeholder.com/150',
@@ -63,30 +60,35 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 title: Text(student['name'] ?? '-'),
                 subtitle: Text('NIM: ${student['nim'] ?? '-'}'),
-              ),
-              ListTile(
-                title: Text('Address'),
-                subtitle: Text(student['address'] ?? '-'),
-              ),
-              ListTile(
-                title: Text('Birth Date'),
-                subtitle: Text(student['birthDate'] ?? '-'),
-              ),
-              ListTile(
-                title: Text('Hobby'),
-                subtitle: Text(student['hobby'] ?? '-'),
-              ),
-              ListTile(
-                title: Text('Phone'),
-                subtitle: Text(student['phone'] ?? '-'),
-              ),
-            ],
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DetailScreen(
+                        photoUrl: student['photoUrl'] ?? '',
+                        name: student['name'] ?? '',
+                        nim: student['nim'] ?? '',
+                        birthDate: student['birthDate'] ?? '',
+                        hobby: student['hobby'] ?? '',
+                        phoneNumber: student['phone'] ?? '',
+                        address: student['address'] ?? '',
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // TODO: Navigate to AddScreen
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AddEditScreen(),
+            ),
+          );
         },
         child: Icon(Icons.add),
       ),
@@ -95,13 +97,48 @@ class DashboardScreen extends StatelessWidget {
 }
 
 class DetailScreen extends StatelessWidget {
-  const DetailScreen({super.key});
+  final String photoUrl;
+  final String name;
+  final String nim;
+  final String birthDate;
+  final String hobby;
+  final String phoneNumber;
+  final String address;
+
+  const DetailScreen({
+    super.key,
+    required this.photoUrl,
+    required this.name,
+    required this.nim,
+    required this.birthDate,
+    required this.hobby,
+    required this.phoneNumber,
+    required this.address,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Detail')),
-      body: Center(child: Text('Detail Screen Placeholder')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              radius: 50,
+              backgroundImage: NetworkImage(photoUrl),
+            ),
+            SizedBox(height: 16),
+            Text('Name: $name', style: TextStyle(fontSize: 18)),
+            Text('NIM: $nim'),
+            Text('Birth Date: $birthDate'),
+            Text('Hobby: $hobby'),
+            Text('Phone: $phoneNumber'),
+            Text('Address: $address'),
+          ],
+        ),
+      ),
     );
   }
 }

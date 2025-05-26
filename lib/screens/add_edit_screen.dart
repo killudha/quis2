@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class AddEditScreen extends StatefulWidget {
   final bool isEdit;
@@ -18,6 +22,7 @@ class _AddEditScreenState extends State<AddEditScreen> {
   final TextEditingController _hobbyController = TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
+  File? _imageFile;
 
   @override
   void initState() {
@@ -27,9 +32,52 @@ class _AddEditScreenState extends State<AddEditScreen> {
       _nimController.text = widget.studentData!['nim'] ?? '';
       _birthDateController.text = widget.studentData!['birthDate'] ?? '';
       _hobbyController.text = widget.studentData!['hobby'] ?? '';
-      _phoneNumberController.text = widget.studentData!['phoneNumber'] ?? '';
+      _phoneNumberController.text = widget.studentData!['phone'] ?? '';
       _addressController.text = widget.studentData!['address'] ?? '';
     }
+  }
+
+  Future<void> _pickImage() async {
+    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _imageFile = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future<void> _saveData() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    String? photoUrl;
+    if (_imageFile != null) {
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('student_photos/${DateTime.now().millisecondsSinceEpoch}.jpg');
+      await storageRef.putFile(_imageFile!);
+      photoUrl = await storageRef.getDownloadURL();
+    }
+
+    final studentData = {
+      'name': _nameController.text,
+      'nim': _nimController.text,
+      'birthDate': _birthDateController.text,
+      'hobby': _hobbyController.text,
+      'phone': _phoneNumberController.text,
+      'address': _addressController.text,
+      'photoUrl': photoUrl ?? widget.studentData?['photoUrl'],
+    };
+
+    if (widget.isEdit) {
+      await FirebaseFirestore.instance
+          .collection('students')
+          .doc(widget.studentData!['id'])
+          .update(studentData);
+    } else {
+      await FirebaseFirestore.instance.collection('students').add(studentData);
+    }
+
+    Navigator.pop(context);
   }
 
   @override
@@ -44,6 +92,18 @@ class _AddEditScreenState extends State<AddEditScreen> {
           key: _formKey,
           child: ListView(
             children: [
+              GestureDetector(
+                onTap: _pickImage,
+                child: CircleAvatar(
+                  radius: 50,
+                  backgroundImage: _imageFile != null
+                      ? FileImage(_imageFile!)
+                      : (widget.isEdit && widget.studentData?['photoUrl'] != null
+                          ? NetworkImage(widget.studentData!['photoUrl'])
+                          : AssetImage('assets/logo.png')) as ImageProvider,
+                ),
+              ),
+              SizedBox(height: 16),
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(labelText: 'Nama'),
@@ -99,11 +159,7 @@ class _AddEditScreenState extends State<AddEditScreen> {
               ),
               SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    // TODO: Save or update data to Firebase
-                  }
-                },
+                onPressed: _saveData,
                 child: Text(widget.isEdit ? 'Update' : 'Simpan'),
               ),
             ],
